@@ -131,7 +131,7 @@ class Get_the_spoils():
             print(row)
 
 
-# In[4]:
+# In[5]:
 
 
 class control_spider():
@@ -184,12 +184,12 @@ class control_spider():
         pd_data = pd.DataFrame(data)
         col_list = pd_data.columns
         nwe_col = [col_list[2],col_list[1],col_list[0],col_list[4],col_list[3]]
-        pd_data.reindex(nwe_col,axis=1)
+        pd_data = pd_data.reindex(nwe_col,axis=1)
         pd_data.to_csv(str(eaiCode)+".csv")
         return spider
 
 
-# In[5]:
+# In[6]:
 
 
 if __name__ == "__main__":
