@@ -11,6 +11,7 @@ import re
 import chardet
 import json
 import pandas as pd
+import time
 
 
 # In[2]:
@@ -69,8 +70,7 @@ class crawler():
     @classmethod
     def cookies_to_dict(cls,cookie):
         """cookies(str) to cookies(dict)"""
-        cookies = dict([l.split("=", 1) for l in cookie.split("; ")])
-        return cookies
+        return dict([l.split("=", 1) for l in cookie.split("; ")])
     @classmethod
     def headers_to_dict(cls,header):
         """headers(str) to headers(dict)"""
@@ -131,11 +131,12 @@ class Get_the_spoils():
             print(row)
 
 
-# In[5]:
+# In[4]:
 
 
 class control_spider():
     spider = None
+    
     def __init__(self,session=True):
         self.create_spider()
         
@@ -153,54 +154,62 @@ class control_spider():
         classification = json.loads(spider.response.text)
         return classification["data"]
     
-    def search_rate(self):
-        #建立參數
-        url = "https://www.bankchb.com/frontend/jsp/getG0100_history.jsp"
-        header = ("Accept: application/json, text/javascript, */*; q=0.01"
-        "Accept-Encoding: gzip, deflate, br"
-        "Accept-Language: zh-TW,zh;q=0.9,en;q=0.8"
-        "Connection: keep-alive"
-        "Content-Length: 81"
-        "Content-Type: application/x-www-form-urlencoded; charset=UTF-8"
-        "Cookie: JSESSIONID=w+W1nQtUfUzU2ZGOnUG4Rg1+.node12; TS01171582=016d761eadbcf837c85031b25d795f2d9275f2f36c6118014a5fbb962622fecf070e3b6c7386a6d2f1cd5af86317d44664f7c357ed; _ga=GA1.2.1272667649.1554811477; _gid=GA1.2.169491573.1554811477; CHBCSApersisted=null_0_5b45ce77387546d0a578bf1907aa0ecf_1554811476929_24848355_1554897835180_2; TS01e39486=016d761eadc6043afcf22071f418c2bb1484ec4e4065c04c54caabd769c386757071346959; CHBCSAsession=24848355_1554901136080_1554897835180_3170_1dbacf5fcb6d48628be67c256fc596b7"
-        "Host: www.bankchb.com"
-        "Origin: https://www.bankchb.com"
-        "Referer: https://www.bankchb.com/frontend/G0100_history.jsp"
-        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36"
-        "X-Requested-With: XMLHttpRequest")
-        default_params = ("interval: interval-one"
-                          "startDate: 2016/04/11"
-                          "endDate: 2019/04/09")
-        params_dict = crawler.headers_to_dict(default_params)
+    def get_search_parameter(self,):
         classification = self.get_classification()
         print(classification)
-        eaiCode = input('輸入幣別(ex. CNY):')
-        params_dict["eaiCode"] = eaiCode
+        input_eaiCode = input("輸入幣別，多選請用,隔開:"+"\n"+"(ex. CNY,USD):"+"\n")
+        eaiCode_list = input_eaiCode.split(',')
+        print("輸入查詢日期(不能超過3年) :"+"\n")
+        startDate = input("輸入開始日期"+"\n"+"(ex. 2016/05/01):"+"\n")
+        endDate = input("輸入結束日期"+"\n"+"(ex. 2019/04/09):"+"\n")
+        return eaiCode_list,startDate,endDate
+    
+    def search_rate(self):
+        #url,headers
+        url = "https://www.bankchb.com/frontend/jsp/getG0100_history.jsp"
+        header = ( "Accept: application/json, text/javascript, */*; q=0.01"+"\n"
+                "Accept-Encoding: gzip, deflate, br"+"\n"
+                "Accept-Language: zh-TW,zh;q=0.9,en;q=0.8"+"\n"
+                "Connection: keep-alive"+"\n"
+                "Content-Length: 81"+"\n"
+                "Content-Type: application/x-www-form-urlencoded; charset=UTF-8"+"\n"
+                "Host: www.bankchb.com"+"\n"
+                "Origin: https://www.bankchb.com"+"\n"
+                "Referer: https://www.bankchb.com/frontend/G0100_history.jsp"+"\n"
+                "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36"+"\n"
+                "X-Requested-With: XMLHttpRequest")
+        #params
+        default_params = ("interval: interval-one"
+                                  "\n"
+                                  "startDate: 2017/01/01"
+                                  "\n"
+                                  "endDate: 2019/04/09")
+        params_dict = crawler.headers_to_dict(default_params)
+        eaiCode_list,startDate,endDate = self.get_search_parameter()
+        params_dict["startDate"] = startDate
+        params_dict["endDate"] = endDate
         #get
         spider = self.spider
-        spider.set_parameter(headers=header)
-        spider.sess_post_url(url,data=params_dict)
-        data = json.loads(spider.response.text)['datas']
-        pd_data = pd.DataFrame(data)
-        col_list = pd_data.columns
-        nwe_col = [col_list[2],col_list[1],col_list[0],col_list[4],col_list[3]]
-        pd_data = pd_data.reindex(nwe_col,axis=1)
-        pd_data.to_csv(str(eaiCode)+".csv")
+        for eaiCode in eaiCode_list:
+            params_dict["eaiCode"] = eaiCode
+            spider.set_parameter(headers=header)
+            spider.sess_post_url(url,data=params_dict)
+            data = json.loads(spider.response.text)['datas']
+            pd_data = pd.DataFrame(data)
+            col_list = pd_data.columns
+            nwe_col = [col_list[2],col_list[1],col_list[0],col_list[4],col_list[3]]
+            pd_data = pd_data.reindex(nwe_col,axis=1)
+            pd_data.to_csv(str(eaiCode)+".csv")
+            time.sleep(0.5)
         return spider
 
 
-# In[6]:
+# In[5]:
 
 
 if __name__ == "__main__":
     control = control_spider()
     spider = control.search_rate()
-
-
-# In[ ]:
-
-
-
 
 
 # In[ ]:
