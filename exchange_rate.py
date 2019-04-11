@@ -159,7 +159,7 @@ class control_spider():
         print(classification)
         input_eaiCode = input("輸入幣別，多選請用,隔開:"+"\n"+"(ex. CNY,USD):"+"\n")
         eaiCode_list = input_eaiCode.split(',')
-        print("輸入查詢日期(不能超過3年) :"+"\n")
+        print("輸入查詢日期(不能超過3年) :")
         startDate = input("輸入開始日期"+"\n"+"(ex. 2016/05/01):"+"\n")
         endDate = input("輸入結束日期"+"\n"+"(ex. 2019/04/09):"+"\n")
         return eaiCode_list,startDate,endDate
